@@ -17,11 +17,9 @@
  */
 package agent;
 
-import agent.BenchmarkSimulationAgent;
 import event.Event;
 import event.EventType;
 import event.NetworkComponent;
-import java.util.List;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -30,15 +28,10 @@ import network.Link;
 import network.LinkState;
 import network.Node;
 import org.apache.log4j.Logger;
-import power.input.PowerNodeState;
 import protopeer.util.quantities.Time;
 import Jama.EigenvalueDecomposition;
-import Jama.Matrix;
-import input.TopologyLoader;
 import power.backend.PowerBackendParameter;
-import power.input.PowerFlowLoader;
 import org.apache.commons.math3.stat.descriptive.rank.Max;
-import org.apache.commons.math3.stat.descriptive.moment.Mean;
 
 /**
  * Cascade if link limits violated. Domain independent.
@@ -166,7 +159,10 @@ public class BenchmarkAnalysis extends BenchmarkSimulationAgent {
                 globalCount++;
 
                 // Output data at current iteration and go to next one
-                nextIteration();
+                // Hacking the iterations to work with new SFINA core without need
+                // to change much here
+                setIteration(getIteration()+1);
+                saveOutputData();
 
                 // Go to next iteration if there were islands added to it
                 iter++;
@@ -194,17 +190,18 @@ public class BenchmarkAnalysis extends BenchmarkSimulationAgent {
     }
 
     public double getSpectralRadius() {
-        final int N = getFlowNetwork().getNodes().size();
-        //EigenvalueDecomposition E
-        //        = new EigenvalueDecomposition(calculateAdjacencyMatrix().plus(calculateAdjacencyMatrix().transpose()).times(0.5));
-        EigenvalueDecomposition E
-                = new EigenvalueDecomposition(calculateAdjacencyMatrix());
-        double[] d = E.getRealEigenvalues();
-
-        Max maximum = new Max();
-        double maxEigen = maximum.evaluate(d, 0, d.length);
-        //double maxEigen = d[N - 1];
-        return maxEigen;
+//        final int N = getFlowNetwork().getNodes().size();
+//        //EigenvalueDecomposition E
+//        //        = new EigenvalueDecomposition(calculateAdjacencyMatrix().plus(calculateAdjacencyMatrix().transpose()).times(0.5));
+//        EigenvalueDecomposition E
+//                = new EigenvalueDecomposition(calculateAdjacencyMatrix());
+//        double[] d = E.getRealEigenvalues();
+//
+//        Max maximum = new Max();
+//        double maxEigen = maximum.evaluate(d, 0, d.length);
+//        //double maxEigen = d[N - 1];
+//        return maxEigen;
+        return 0.0;
     }
 
     public void getLinkStatus(int total_it) {
@@ -238,22 +235,7 @@ public class BenchmarkAnalysis extends BenchmarkSimulationAgent {
      * @return true if flow analysis finally converged, else false
      */
     public boolean flowConvergenceStrategy(FlowNetwork flowNetwork) {
-        switch (this.getDomain()) {
-            case POWER:
-                break;
-            case GAS:
-                logger.debug("This domain is not supported at this moment");
-                break;
-            case WATER:
-                logger.debug("This domain is not supported at this moment");
-                break;
-            case TRANSPORTATION:
-                logger.debug("This domain is not supported at this moment");
-                break;
-            default:
-                logger.debug("This domain is not supported at this moment");
-        }
-        return callBackend(flowNetwork);
+        return getFlowDomainAgent().flowAnalysis(flowNetwork);
     }
 
     /**
@@ -357,7 +339,7 @@ public class BenchmarkAnalysis extends BenchmarkSimulationAgent {
     }
 
     private void setCapacityByToleranceParameter() {
-        callBackend(getFlowNetwork());
+        getFlowDomainAgent().flowAnalysis(getFlowNetwork());
         for (Link link : getFlowNetwork().getLinks()) {
 
             originalFlow.add(link.getFlow());
@@ -372,7 +354,7 @@ public class BenchmarkAnalysis extends BenchmarkSimulationAgent {
             }
         }
         if (capacityNotSet) {
-            callBackend(getFlowNetwork());
+            getFlowDomainAgent().flowAnalysis(getFlowNetwork());
             for (Link link : getFlowNetwork().getLinks()) {
                 if (link.getFlow()==0.0){
                     link.setCapacity(toleranceParameter * 33.13);
@@ -385,7 +367,7 @@ public class BenchmarkAnalysis extends BenchmarkSimulationAgent {
     }
 
     public double getToleranceParameter() {
-        return (Double) this.getBackendParameters().get(PowerBackendParameter.TOLERANCE_PARAMETER);
+        return (Double) this.getFlowDomainAgent().getDomainParameters().get(PowerBackendParameter.TOLERANCE_PARAMETER);
     }
 
 }

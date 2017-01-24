@@ -17,6 +17,7 @@
  */
 package experiment;
 
+import agent.BenchmarkEvolution;
 import replayer.BenchmarkLogReplayer;
 import agent.BenchmarkSimulationAgent;
 import core.SimpleTimeSteppingAgent;
@@ -32,9 +33,9 @@ import protopeer.util.quantities.Time;
  *
  * @author evangelospournaras
  */
-public class TestBenchmarkAgent extends SimulatedExperiment{
+public class TestEvolutionAgent extends SimulatedExperiment{
     
-    private static final Logger logger = Logger.getLogger(TestBenchmarkAgent.class);
+    private static final Logger logger = Logger.getLogger(TestEvolutionAgent.class);
     
     private final static String expSeqNum="01";
     private static String experimentID="experiment-"+expSeqNum;
@@ -48,13 +49,13 @@ public class TestBenchmarkAgent extends SimulatedExperiment{
     public static void main(String[] args) {
         
         Experiment.initEnvironment();
-        final TestBenchmarkAgent test = new TestBenchmarkAgent();
+        final TestEvolutionAgent test = new TestEvolutionAgent();
         test.init();
         
         PeerFactory peerFactory=new PeerFactory() {
             public Peer createPeer(int peerIndex, Experiment experiment) {
                 Peer newPeer = new Peer(peerIndex);
-                newPeer.addPeerlet(new BenchmarkSimulationAgent(
+                newPeer.addPeerlet(new BenchmarkEvolution(
                         experimentID, 
                         Time.inMilliseconds(bootstrapTime),
                         Time.inMilliseconds(runTime)));
