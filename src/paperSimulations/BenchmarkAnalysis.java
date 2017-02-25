@@ -15,7 +15,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package agent;
+package paperSimulations;
 
 import event.Event;
 import event.EventType;
@@ -30,6 +30,7 @@ import network.Node;
 import org.apache.log4j.Logger;
 import protopeer.util.quantities.Time;
 import Jama.EigenvalueDecomposition;
+import agent.BenchmarkSimulationAgent;
 import power.backend.PowerBackendParameter;
 import org.apache.commons.math3.stat.descriptive.rank.Max;
 
@@ -55,12 +56,8 @@ public class BenchmarkAnalysis extends BenchmarkSimulationAgent {
 
     public ArrayList<Double> originalFlow = new ArrayList<Double>();
 
-    public BenchmarkAnalysis(String experimentID,
-            Time bootstrapTime,
-            Time runTime) {
-        super(experimentID,
-                bootstrapTime,
-                runTime);
+    public BenchmarkAnalysis(String experimentID) {
+        super(experimentID);
     }
 
     /**

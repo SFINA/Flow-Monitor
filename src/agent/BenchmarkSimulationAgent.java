@@ -17,7 +17,6 @@
  */
 package agent;
 
-import utilities.Metrics;
 import core.SimulationAgent;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -27,70 +26,93 @@ import org.apache.log4j.Logger;
 import protopeer.measurement.MeasurementFileDumper;
 import protopeer.measurement.MeasurementLog;
 import protopeer.measurement.MeasurementLoggerListener;
-import protopeer.util.quantities.Time;
 
 /**
- * General domain independent measurements.
- * @author evangelospournaras
+ * General domain independent measurements. 
+ * Features:
+ * - Logs per iteration and per time step
+ * - Offers overridable methods to easily log more values
+ * - Plays together with BenchmarkLogReplayer to compute, output and display logging results
+ * 
+ * @author Ben
  */
 public class BenchmarkSimulationAgent extends SimulationAgent{
     
     private static final Logger logger = Logger.getLogger(BenchmarkSimulationAgent.class);
     
-    private HashMap<Integer,HashMap<String,HashMap<Metrics,Object>>> temporalLinkMetrics;
-    private HashMap<Integer,HashMap<String,HashMap<Metrics,Object>>> temporalNodeMetrics;
-    private HashMap<Integer,HashMap<Metrics,Object>> temporalSystemMetrics;
+    // Time, Iteration, Node/Link ID, Metric, Values
+    private HashMap<Integer,HashMap<Integer,HashMap<String,HashMap<Metrics,Object>>>> temporalLinkMetrics;
+    private HashMap<Integer,HashMap<Integer,HashMap<String,HashMap<Metrics,Object>>>> temporalNodeMetrics;
+    
+    // Time, Iteration, Metric, Values
+    private HashMap<Integer,HashMap<Integer,HashMap<Metrics,Object>>> temporalSystemMetrics;
     private long simulationStartTime;
     
-    public BenchmarkSimulationAgent(String experimentID, 
-            Time bootstrapTime, 
-            Time runTime){
-        super(experimentID,
-                bootstrapTime,
-                runTime);
+    public BenchmarkSimulationAgent(String experimentID){
+        super(experimentID);
         this.temporalLinkMetrics=new HashMap();
         this.temporalNodeMetrics=new HashMap();
         this.temporalSystemMetrics=new HashMap();
     }
     
     public void initMeasurementVariables(){
+        if(getIteration()==1){
+            this.getTemporalLinkMetrics().put(this.getSimulationTime(), new HashMap<>());
+            this.getTemporalNodeMetrics().put(this.getSimulationTime(), new HashMap<>());
+            this.getTemporalSystemMetrics().put(this.getSimulationTime(), new HashMap<>());
+        }
+
         HashMap<String,HashMap<Metrics,Object>> linkMetrics=new HashMap<>();
         for(Link link:this.getFlowNetwork().getLinks()){
             HashMap<Metrics,Object> metrics=new HashMap<>();
             linkMetrics.put(link.getIndex(), metrics);
         }
-        this.getTemporalLinkMetrics().put(this.getSimulationTime(), linkMetrics);
+        this.getTemporalLinkMetrics().get(this.getSimulationTime()).put(this.getIteration(), linkMetrics);
         
         HashMap<String,HashMap<Metrics,Object>> nodeMetrics=new HashMap<>();
         for(Node node:this.getFlowNetwork().getNodes()){
             HashMap<Metrics,Object> metrics=new HashMap<>();
             nodeMetrics.put(node.getIndex(), metrics);
         }
-        this.getTemporalNodeMetrics().put(this.getSimulationTime(), nodeMetrics);
+        this.getTemporalNodeMetrics().get(this.getSimulationTime()).put(this.getIteration(), nodeMetrics);
         
-        this.getTemporalSystemMetrics().put(this.getSimulationTime(), new HashMap<>());
+        this.getTemporalSystemMetrics().get(this.getSimulationTime()).put(this.getIteration(), new HashMap<>());
     }
     
-    public void calculateTotalLines(){
+    public void calculateTotalNumber(){
         for(Link link:this.getFlowNetwork().getLinks()){
-            HashMap<Metrics,Object> metrics=this.getTemporalLinkMetrics().get(this.getSimulationTime()).get(link.getIndex());
-            metrics.put(Metrics.TOTAL_LINES, 1.0);
+            HashMap<Metrics,Object> metrics=this.getTemporalLinkMetrics().get(this.getSimulationTime()).get(this.getIteration()).get(link.getIndex());
+            metrics.put(Metrics.TOTAL_LINKS, 1.0);
+        }
+        for(Node node:this.getFlowNetwork().getNodes()){
+            HashMap<Metrics,Object> metrics=this.getTemporalNodeMetrics().get(this.getSimulationTime()).get(this.getIteration()).get(node.getIndex());
+            metrics.put(Metrics.TOTAL_NODES, 1.0);
         }
     }
     
     public void calculateActivationStatus(){
         for(Link link:this.getFlowNetwork().getLinks()){
             boolean activationStatus=link.isActivated();
-            HashMap<Metrics,Object> metrics=this.getTemporalLinkMetrics().get(this.getSimulationTime()).get(link.getIndex());
-            metrics.put(Metrics.ACTIVATED_LINES, (activationStatus==true) ? 1.0 : 0.0);
+            HashMap<Metrics,Object> metrics=this.getTemporalLinkMetrics().get(this.getSimulationTime()).get(this.getIteration()).get(link.getIndex());
+            metrics.put(Metrics.ACTIVATED_LINKS, (activationStatus==true) ? 1.0 : 0.0);
+        }
+        for(Node node:this.getFlowNetwork().getNodes()){
+            boolean activationStatus=node.isActivated();
+            HashMap<Metrics,Object> metrics=this.getTemporalNodeMetrics().get(this.getSimulationTime()).get(this.getIteration()).get(node.getIndex());
+            metrics.put(Metrics.ACTIVATED_NODES, (activationStatus==true) ? 1.0 : 0.0);
         }
     }
     
     public void calculateFlow(){
         for(Link link:this.getFlowNetwork().getLinks()){
             double flow=link.getFlow();
-            HashMap<Metrics,Object> metrics=this.getTemporalLinkMetrics().get(this.getSimulationTime()).get(link.getIndex());
-            metrics.put(Metrics.LINE_FLOW, (link.isActivated()) ? flow : 0.0);
+            HashMap<Metrics,Object> metrics=this.getTemporalLinkMetrics().get(this.getSimulationTime()).get(this.getIteration()).get(link.getIndex());
+            metrics.put(Metrics.LINK_FLOW, (link.isActivated()) ? flow : 0.0);
+        }
+        for(Node node:this.getFlowNetwork().getNodes()){
+            double flow=node.getFlow();
+            HashMap<Metrics,Object> metrics=this.getTemporalNodeMetrics().get(this.getSimulationTime()).get(this.getIteration()).get(node.getIndex());
+            metrics.put(Metrics.NODE_FLOW, (node.isActivated()) ? flow : 0.0);
         }
     }
     
@@ -99,8 +121,28 @@ public class BenchmarkSimulationAgent extends SimulationAgent{
             double flow=link.getFlow();
             double capacity=link.getCapacity();
             double utilization=flow/capacity;
-            HashMap<Metrics,Object> metrics=this.getTemporalLinkMetrics().get(this.getSimulationTime()).get(link.getIndex());
-            metrics.put(Metrics.LINE_UTILIZATION, (link.isActivated()) ? utilization : 1.0);
+            HashMap<Metrics,Object> metrics=this.getTemporalLinkMetrics().get(this.getSimulationTime()).get(this.getIteration()).get(link.getIndex());
+            metrics.put(Metrics.LINK_UTILIZATION, (link.isActivated()) ? utilization : 1.0);
+        }
+        for(Node node:this.getFlowNetwork().getNodes()){
+            double flow=node.getFlow();
+            double capacity=node.getCapacity();
+            double utilization=flow/capacity;
+            HashMap<Metrics,Object> metrics=this.getTemporalNodeMetrics().get(this.getSimulationTime()).get(this.getIteration()).get(node.getIndex());
+            metrics.put(Metrics.NODE_UTILIZATION, (node.isActivated()) ? utilization : 1.0);
+        }
+    }
+    
+    public void calculateOverloadStatus(){
+        for(Link link:this.getFlowNetwork().getLinks()){
+            boolean overloaded = Math.abs(link.getFlow()) > Math.abs(link.getCapacity());
+            HashMap<Metrics,Object> metrics=this.getTemporalLinkMetrics().get(this.getSimulationTime()).get(this.getIteration()).get(link.getIndex());
+            metrics.put(Metrics.OVERLOADED_LINKS, overloaded ? 1.0 : 0.0);
+        }
+        for(Node node:this.getFlowNetwork().getNodes()){
+            boolean overloaded = Math.abs(node.getFlow()) > Math.abs(node.getCapacity());
+            HashMap<Metrics,Object> metrics=this.getTemporalNodeMetrics().get(this.getSimulationTime()).get(this.getIteration()).get(node.getIndex());
+            metrics.put(Metrics.OVERLOADED_NODES, overloaded ? 1.0 : 0.0);
         }
     }
     
@@ -110,12 +152,12 @@ public class BenchmarkSimulationAgent extends SimulationAgent{
     
     public void saveSimuTime(){
         double totSimuTime = System.currentTimeMillis() - simulationStartTime;
-        this.getTemporalSystemMetrics().get(this.getSimulationTime()).put(Metrics.TOT_SIMU_TIME, totSimuTime);
+        this.getTemporalSystemMetrics().get(this.getSimulationTime()).get(this.getIteration()).put(Metrics.TOT_SIMU_TIME, totSimuTime);
     }
     
     public void saveIterationNumber(){
-        int iter = getIteration()-1;
-        this.getTemporalSystemMetrics().get(this.getSimulationTime()).put(Metrics.NEEDED_ITERATIONS, iter);
+        int iter = getIteration();
+        this.getTemporalSystemMetrics().get(this.getSimulationTime()).get(this.getIteration()).put(Metrics.NEEDED_ITERATIONS, iter);
     }
     
     @Override
@@ -129,7 +171,8 @@ public class BenchmarkSimulationAgent extends SimulationAgent{
         this.calculateActivationStatus();
         this.calculateFlow();
         this.calculateUtilization();
-        this.calculateTotalLines();
+        this.calculateTotalNumber();
+        this.calculateOverloadStatus();
         this.saveSimuTime();
         this.saveIterationNumber();
     }
@@ -137,14 +180,14 @@ public class BenchmarkSimulationAgent extends SimulationAgent{
     /**
      * @return the temporalLinkMetrics
      */
-    public HashMap<Integer,HashMap<String,HashMap<Metrics,Object>>> getTemporalLinkMetrics() {
+    public HashMap<Integer,HashMap<Integer,HashMap<String,HashMap<Metrics,Object>>>> getTemporalLinkMetrics() {
         return temporalLinkMetrics;
     }
 
     /**
      * @return the temporalNodeMetrics
      */
-    public HashMap<Integer,HashMap<String,HashMap<Metrics,Object>>> getTemporalNodeMetrics() {
+    public HashMap<Integer,HashMap<Integer,HashMap<String,HashMap<Metrics,Object>>>> getTemporalNodeMetrics() {
         return temporalNodeMetrics;
     }
     
@@ -152,38 +195,92 @@ public class BenchmarkSimulationAgent extends SimulationAgent{
      * 
      * @return the temporalSystemMetrics
      */
-    public HashMap<Integer,HashMap<Metrics,Object>> getTemporalSystemMetrics() {
+    public HashMap<Integer,HashMap<Integer,HashMap<Metrics,Object>>> getTemporalSystemMetrics() {
         return temporalSystemMetrics;
     }
     
-    //****************** MEASUREMENTS ******************
-        
+    // *************************** Measurements ******************************** /
+    // at end of simulation step
+    // ************************************************************************* /
+    
     /**
      * Scheduling the measurements for the simulation agent
      */
     @Override
     public void scheduleMeasurements(){
-        setMeasurementDumper(new MeasurementFileDumper(getPeersLogDirectory()+this.getExperimentID()+"/peer-"+getPeer().getIndexNumber()));
+        setMeasurementDumper(new MeasurementFileDumper(getPeersLogDirectory()+this.getExperimentID()+this.getPeerTokenName()));
         getPeer().getMeasurementLogger().addMeasurementLoggerListener(new MeasurementLoggerListener(){
             public void measurementEpochEnded(MeasurementLog log, int epochNumber){
                 int simulationTime=getSimulationTime();
+                Integer totalIteration=getIteration();
                 
                 if(simulationTime>=1){
+                    logger.debug("Logging at simulation time " + simulationTime);
                     log.logTagSet(simulationTime, new HashSet(getFlowNetwork().getLinks()), simulationTime);
-                    for(Link link:getFlowNetwork().getLinks()){
-                        HashMap<Metrics,Object> linkMetrics=getTemporalLinkMetrics().get(simulationTime).get(link.getIndex());
-                        log.log(simulationTime, Metrics.LINE_UTILIZATION, ((Double)linkMetrics.get(Metrics.LINE_UTILIZATION)));
-                        log.log(simulationTime, Metrics.LINE_FLOW, ((Double)linkMetrics.get(Metrics.LINE_FLOW)));
-                        log.log(simulationTime, Metrics.ACTIVATED_LINES, ((Double)linkMetrics.get(Metrics.ACTIVATED_LINES)));
-                        log.log(simulationTime, Metrics.TOTAL_LINES, ((Double)linkMetrics.get(Metrics.TOTAL_LINES)));
+                    log.logTagSet(simulationTime, new HashSet(getFlowNetwork().getNodes()), simulationTime);
+                    
+                    for(Integer iteration=1; iteration<=totalIteration; iteration++){
+                        for(Link link:getFlowNetwork().getLinks()){
+                            HashMap<Metrics,Object> linkMetrics=getTemporalLinkMetrics().get(simulationTime).get(iteration).get(link.getIndex());
+                            log.log(simulationTime, iteration, Metrics.LINK_UTILIZATION, ((Double)linkMetrics.get(Metrics.LINK_UTILIZATION)));
+                            log.log(simulationTime, iteration, Metrics.LINK_FLOW, ((Double)linkMetrics.get(Metrics.LINK_FLOW)));
+                            log.log(simulationTime, iteration, Metrics.ACTIVATED_LINKS, ((Double)linkMetrics.get(Metrics.ACTIVATED_LINKS)));
+                            log.log(simulationTime, iteration, Metrics.OVERLOADED_LINKS, ((Double)linkMetrics.get(Metrics.OVERLOADED_LINKS)));
+                            log.log(simulationTime, iteration, Metrics.TOTAL_LINKS, ((Double)linkMetrics.get(Metrics.TOTAL_LINKS)));
+                            logLinkMetrics(log, simulationTime, iteration, linkMetrics);
+                        }
+                        for(Node node:getFlowNetwork().getNodes()){
+                            HashMap<Metrics,Object> nodeMetrics=getTemporalNodeMetrics().get(simulationTime).get(iteration).get(node.getIndex());
+                            log.log(simulationTime, iteration, Metrics.NODE_UTILIZATION, ((Double)nodeMetrics.get(Metrics.NODE_UTILIZATION)));
+                            log.log(simulationTime, iteration, Metrics.NODE_FLOW, ((Double)nodeMetrics.get(Metrics.NODE_FLOW)));
+                            log.log(simulationTime, iteration, Metrics.ACTIVATED_NODES, ((Double)nodeMetrics.get(Metrics.ACTIVATED_NODES)));
+                            log.log(simulationTime, iteration, Metrics.OVERLOADED_NODES, ((Double)nodeMetrics.get(Metrics.OVERLOADED_NODES)));
+                            log.log(simulationTime, iteration, Metrics.TOTAL_NODES, ((Double)nodeMetrics.get(Metrics.TOTAL_NODES)));
+                            logNodeMetrics(log, simulationTime, iteration, nodeMetrics);
+                        }
+                        HashMap<Metrics,Object> sysMetrics=getTemporalSystemMetrics().get(simulationTime).get(iteration);
+                        log.log(simulationTime, iteration, Metrics.TOT_SIMU_TIME, ((Double)sysMetrics.get(Metrics.TOT_SIMU_TIME)));
+                        log.log(simulationTime, Metrics.NEEDED_ITERATIONS, (Integer)sysMetrics.get(Metrics.NEEDED_ITERATIONS));
+                        logSystemMetrics(log, simulationTime, iteration, sysMetrics);
                     }
-                    HashMap<Metrics,Object> sysMetrics=getTemporalSystemMetrics().get(simulationTime);
-                    log.log(simulationTime, Metrics.TOT_SIMU_TIME, ((Double)sysMetrics.get(Metrics.TOT_SIMU_TIME)));
-                    log.log(simulationTime, Metrics.NEEDED_ITERATIONS, ((Integer)sysMetrics.get(Metrics.NEEDED_ITERATIONS)));
                 }
                 getMeasurementDumper().measurementEpochEnded(log, simulationTime);
                 log.shrink(simulationTime, simulationTime+1);
             }
         });
+    }
+    
+    /**
+     * Override to log more link metrics.
+     * @param log
+     * @param simulationTime
+     * @param iteration
+     * @param linkMetrics 
+     */
+    public void logLinkMetrics(MeasurementLog log, int simulationTime, Integer iteration, HashMap<Metrics,Object> linkMetrics){
+        //log.log(simulationTime, iteration, Metrics.TOTAL_LINES, ((Double)linkMetrics.get(Metrics.TOTAL_LINES)));
+
+    }
+    
+    /**
+     * Override to log more node metrics.
+     * @param log
+     * @param simulationTime
+     * @param iteration
+     * @param nodeMetrics 
+     */
+    public void logNodeMetrics(MeasurementLog log, int simulationTime, Integer iteration, HashMap<Metrics,Object> nodeMetrics){
+        //log.log(simulationTime, iteration, Metrics.TOTAL_LINES, ((Double)linkMetrics.get(Metrics.TOTAL_LINES)));
+    }
+    
+    /**
+     * Override to log more system metrics.
+     * @param log
+     * @param simulationTime
+     * @param iteration
+     * @param sysMetrics 
+     */
+    public void logSystemMetrics(MeasurementLog log, int simulationTime, Integer iteration, HashMap<Metrics,Object> sysMetrics) {
+        //log.log(simulationTime, iteration, Metrics.TOT_SIMU_TIME, ((Double)sysMetrics.get(Metrics.TOT_SIMU_TIME)));
     }
 }

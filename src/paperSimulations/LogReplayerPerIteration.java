@@ -3,9 +3,9 @@
  * and open the template in the editor.
  */
 
-package replayer;
+package paperSimulations;
 
-import utilities.Metrics;
+import agent.Metrics;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -184,7 +184,7 @@ public class LogReplayerPerIteration {
                 
         for (int i=0;i<203;i++){ //42 or 114 is the total number of iterations, 41 is total number of lines
         double epochNum=epochNumber;
-        double avgLineLossesPerEpoch=1-(log.getAggregateByEpochNumber(epochNumber, Metrics.ACTIVATED_LINES).getSum()/log.getAggregateByEpochNumber(epochNumber, Metrics.TOTAL_LINES).getSum());
+        double avgLineLossesPerEpoch=1-(log.getAggregateByEpochNumber(epochNumber, Metrics.ACTIVATED_LINKS).getSum()/log.getAggregateByEpochNumber(epochNumber, Metrics.TOTAL_LINKS).getSum());
         double avgFlowPerEpoch=log.getAggregateByEpochNumber(epochNumber, "power"+Integer.toString(i)).getAverage();
         double avgUtilizationPerEpoch=log.getAggregateByEpochNumber(epochNumber, "utilization"+Integer.toString(i)).getAverage();
         double relPowerLossBetweenEpochs = 1.0-log.getAggregateByEpochNumber(epochNumber, Metrics.NODE_FINAL_LOADING).getSum()/log.getAggregateByEpochNumber(epochNumber, Metrics.NODE_INIT_LOADING).getSum();

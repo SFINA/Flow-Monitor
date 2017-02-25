@@ -15,12 +15,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package agent;
+package paperSimulations;
 
+import agent.Metrics;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.PrintStream;
-import utilities.Metrics;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -52,12 +52,8 @@ public class BenchmarkEvolution extends BenchmarkAnalysis {
     private static final Logger logger = Logger.getLogger(BenchmarkEvolution.class);
     public ArrayList<Integer> linktoIterations = new ArrayList<Integer>();
 
-    public BenchmarkEvolution(String experimentID,
-            Time bootstrapTime,
-            Time runTime) {
-        super(experimentID,
-                bootstrapTime,
-                runTime);
+    public BenchmarkEvolution(String experimentID) {
+        super(experimentID);
     }
 
     @Override
@@ -85,7 +81,7 @@ public class BenchmarkEvolution extends BenchmarkAnalysis {
         this.calculateActivationStatus();
         this.calculateFlow();
         this.calculateUtilization();
-        this.calculateTotalLines();
+        this.calculateTotalNumber();
         this.saveSimuTime();
         this.saveIterationNumber();
     }
@@ -328,17 +324,17 @@ public class BenchmarkEvolution extends BenchmarkAnalysis {
                     //before 0 to 42 or 114
                     for (int i = 0; i < 203; i++) { //hardcoded because there is problem in time step for logreplayer
                         for (Link link : getFlowNetwork().getLinks()) {
-                            HashMap<Metrics, Object> linkMetrics = getTemporalLinkMetrics().get(simulationTime).get(link.getIndex());
+                            HashMap<Metrics, Object> linkMetrics = getTemporalLinkMetrics().get(simulationTime).get(getIteration()).get(link.getIndex());
                             log.log(simulationTime, "utilization" + Integer.toString(i), ((Double) powerPerIteration.get(i).get(Integer.parseInt(link.getIndex()) - 1)) / link.getCapacity());
                             log.log(simulationTime, "power" + Integer.toString(i), ((Double) powerPerIteration.get(i).get(Integer.parseInt(link.getIndex()) - 1)));
                             log.log(simulationTime, "powerincrease" + Integer.toString(i), ((Double) powerIncreasePerIteration.get(i).get(Integer.parseInt(link.getIndex()) - 1)));
                             log.log(simulationTime, "link" + Integer.toString(i), ((Double) linkPerIteration.get(i).get(Integer.parseInt(link.getIndex()) - 1)));
-                            log.log(simulationTime, Metrics.TOTAL_LINES, ((Double) linkMetrics.get(Metrics.TOTAL_LINES)));
+                            log.log(simulationTime, Metrics.TOTAL_LINKS, ((Double) linkMetrics.get(Metrics.TOTAL_LINKS)));
                         }
                         log.log(simulationTime, "linkremoved" + Integer.toString(i), ((Integer) linktoIterations.get(i)));
                         log.log(simulationTime, "spectralRadius" + Integer.toString(i), ((Double) spectralRadius.get(i)));
                     }
-                    HashMap<Metrics, Object> sysMetrics = getTemporalSystemMetrics().get(simulationTime);
+                    HashMap<Metrics, Object> sysMetrics = getTemporalSystemMetrics().get(getIteration()).get(simulationTime);
                     log.log(simulationTime, Metrics.TOT_SIMU_TIME, ((Double) sysMetrics.get(Metrics.TOT_SIMU_TIME)));
                     log.log(simulationTime, Metrics.NEEDED_ITERATIONS, ((Integer) sysMetrics.get(Metrics.NEEDED_ITERATIONS)));
                 }

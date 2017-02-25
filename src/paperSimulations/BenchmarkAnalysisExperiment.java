@@ -15,14 +15,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  */
-package experiment;
+package paperSimulations;
 
-import agent.BenchmarkEvolution;
-import replayer.BenchmarkLogReplayer;
-import agent.BenchmarkSimulationAgent;
-import core.SimpleTimeSteppingAgent;
+
+import paperSimulations.LogReplayerPerIteration;
+import java.io.File;
 import org.apache.log4j.Logger;
-import power.backend.InterpssFlowDomainAgent;
 import protopeer.Experiment;
 import protopeer.Peer;
 import protopeer.PeerFactory;
@@ -30,46 +28,63 @@ import protopeer.SimulatedExperiment;
 import protopeer.util.quantities.Time;
 
 /**
- *
- * @author evangelospournaras
+ * Experiment to demonstrate cascading failure in interdependent system. 
+ * @author Manish
  */
-public class TestEvolutionAgent extends SimulatedExperiment{
+public class BenchmarkAnalysisExperiment extends SimulatedExperiment{
     
-    private static final Logger logger = Logger.getLogger(TestEvolutionAgent.class);
+    private static final Logger logger = Logger.getLogger(BenchmarkAnalysisExperiment.class);
     
-    private final static String expSeqNum="01";
+    private static String expSeqNum="case57";
+    private final static String peersLogDirectory="peerlets-log/";
     private static String experimentID="experiment-"+expSeqNum;
     
     //Simulation Parameters
     private final static int bootstrapTime=2000;
     private final static int runTime=1000;
-    private final static int runDuration=10;
+    private final static int runDuration=3; //before 5, here it should be 3 for full iteration
     private final static int N=1;
     
-    public static void main(String[] args) {
-        
+     public static void main(String args[]){
+        run(); 
+        LogReplayerPerIteration replayer=new LogReplayerPerIteration(expSeqNum, 0, 1000);
+        //BenchmarkRegister replayer=new BenchmarkRegister(expSeqNum, 0, 1000);
+    }
+    
+    public static void run() {
+           
         Experiment.initEnvironment();
-        final TestEvolutionAgent test = new TestEvolutionAgent();
+        final BenchmarkAnalysisExperiment test = new BenchmarkAnalysisExperiment();
         test.init();
-        
+        final File folder = new File(peersLogDirectory+experimentID);
+        clearExperimentFile(folder);
+        folder.mkdir();
         PeerFactory peerFactory=new PeerFactory() {
             public Peer createPeer(int peerIndex, Experiment experiment) {
                 Peer newPeer = new Peer(peerIndex);
-                newPeer.addPeerlet(new BenchmarkEvolution(
-                        experimentID, 
-                        Time.inMilliseconds(bootstrapTime),
-                        Time.inMilliseconds(runTime)));
-                newPeer.addPeerlet(new SimpleTimeSteppingAgent());
-                newPeer.addPeerlet(new InterpssFlowDomainAgent());
+                newPeer.addPeerlet(new BenchmarkEvolution(experimentID));
                 return newPeer;
             }
         };
-        
         test.initPeers(0,N,peerFactory);
         test.startPeers(0,N);
-        
         //run the simulation
         test.runSimulation(Time.inSeconds(runDuration));
-        BenchmarkLogReplayer replayer=new BenchmarkLogReplayer(expSeqNum, 0, 1000);
+    }
+    
+   
+    
+    public final static void clearExperimentFile(File experiment){
+        File[] files = experiment.listFiles();
+        if(files!=null) { //some JVMs return null for empty dirs
+            for(File f: files) {
+                if(f.isDirectory()) {
+                    clearExperimentFile(f);
+                } else {
+                    f.delete();
+                }
+            }
+        }
+        experiment.delete();
     }
 }

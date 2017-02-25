@@ -19,7 +19,7 @@ package experiment;
 
 import replayer.BenchmarkLogReplayer;
 import agent.BenchmarkSimulationAgent;
-import core.SimpleTimeSteppingAgent;
+import core.TimeSteppingAgent;
 import org.apache.log4j.Logger;
 import power.backend.InterpssFlowDomainAgent;
 import protopeer.Experiment;
@@ -39,11 +39,13 @@ public class TestBenchmarkAgent extends SimulatedExperiment{
     private final static String expSeqNum="01";
     private static String experimentID="experiment-"+expSeqNum;
     
-    //Simulation Parameters
+    // Simulation Parameters
     private final static int bootstrapTime=2000;
     private final static int runTime=1000;
     private final static int runDuration=10;
     private final static int N=1;
+    
+    private final static boolean writeResultsToFile = true;
     
     public static void main(String[] args) {
         
@@ -51,14 +53,13 @@ public class TestBenchmarkAgent extends SimulatedExperiment{
         final TestBenchmarkAgent test = new TestBenchmarkAgent();
         test.init();
         
-        PeerFactory peerFactory=new PeerFactory() {
+        PeerFactory peerFactory = new PeerFactory() {
             public Peer createPeer(int peerIndex, Experiment experiment) {
                 Peer newPeer = new Peer(peerIndex);
-                newPeer.addPeerlet(new BenchmarkSimulationAgent(
-                        experimentID, 
-                        Time.inMilliseconds(bootstrapTime),
-                        Time.inMilliseconds(runTime)));
-                newPeer.addPeerlet(new SimpleTimeSteppingAgent());
+                newPeer.addPeerlet(new BenchmarkSimulationAgent(experimentID));
+                newPeer.addPeerlet(new TimeSteppingAgent(
+                    Time.inMilliseconds(bootstrapTime),
+                    Time.inMilliseconds(runTime)));
                 newPeer.addPeerlet(new InterpssFlowDomainAgent());
                 return newPeer;
             }
@@ -67,8 +68,10 @@ public class TestBenchmarkAgent extends SimulatedExperiment{
         test.initPeers(0,N,peerFactory);
         test.startPeers(0,N);
         
-        //run the simulation
+        // run the simulation
         test.runSimulation(Time.inSeconds(runDuration));
-        BenchmarkLogReplayer replayer=new BenchmarkLogReplayer(expSeqNum, 0, 1000);
+        
+        // compute and show results
+        BenchmarkLogReplayer replayer = new BenchmarkLogReplayer(expSeqNum, 0, 1000, writeResultsToFile);
     }
 }
