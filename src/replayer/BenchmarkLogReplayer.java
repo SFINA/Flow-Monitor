@@ -189,7 +189,7 @@ public class BenchmarkLogReplayer {
     }
 
     private void calculateEpochResults(MeasurementLog log, Integer epochNumber){
-        int totalIterations = (int) log.getAggregateByEpochNumber(epochNumber, Metrics.NEEDED_ITERATIONS).getMax();
+        Integer totalIterations = (int) log.getAggregateByEpochNumber(epochNumber, Metrics.NEEDED_ITERATIONS).getMax();
         // links
         double avgLinkLosses = 1-(log.getAggregateByEpochNumber(epochNumber, totalIterations, Metrics.ACTIVATED_LINKS).getSum()/log.getAggregateByEpochNumber(epochNumber, totalIterations, Metrics.TOTAL_LINKS).getSum());
         double avgLinkFlow = log.getAggregateByEpochNumber(epochNumber, totalIterations, Metrics.LINK_FLOW).getAverage();
@@ -201,7 +201,7 @@ public class BenchmarkLogReplayer {
         double avgNodeUtilization = log.getAggregateByEpochNumber(epochNumber, totalIterations, Metrics.NODE_UTILIZATION).getAverage();
         double avgNodeOverload = 1-(log.getAggregateByEpochNumber(epochNumber, totalIterations, Metrics.OVERLOADED_NODES).getSum()/log.getAggregateByEpochNumber(epochNumber, totalIterations, Metrics.TOTAL_NODES).getSum());
         double relNodePowerLoss = 1.0-log.getAggregateByEpochNumber(epochNumber, totalIterations, Metrics.NODE_FINAL_LOADING).getSum()/log.getAggregateByEpochNumber(epochNumber, totalIterations, Metrics.NODE_INIT_LOADING).getSum();
-        double relNodePowerLossSinceEpoch1 = 1.0-log.getAggregateByEpochNumber(epochNumber, totalIterations, Metrics.NODE_FINAL_LOADING).getSum()/log.getAggregateByEpochNumber(1, 1, Metrics.NODE_INIT_LOADING).getSum();
+        double relNodePowerLossSinceEpoch1 = 1.0-log.getAggregateByEpochNumber(epochNumber, totalIterations, Metrics.NODE_FINAL_LOADING).getSum()/log.getAggregateByEpochNumber(1, new Integer(1), Metrics.NODE_INIT_LOADING).getSum();
         double islands = log.getAggregateByEpochNumber(epochNumber, totalIterations, Metrics.ISLANDS).getMax();
         double isolNodes = log.getAggregateByEpochNumber(epochNumber, totalIterations, Metrics.ISOLATED_NODES).getMax();
         // system
@@ -223,9 +223,9 @@ public class BenchmarkLogReplayer {
     }
     
     private void calculateIterationResults(MeasurementLog log, int epochNumber){
-        int totalIterations = (int) log.getAggregateByEpochNumber(epochNumber, Metrics.NEEDED_ITERATIONS).getMax();
+        Integer totalIterations = (int) log.getAggregateByEpochNumber(epochNumber, Metrics.NEEDED_ITERATIONS).getMax();
         
-        for(int i=1; i<=totalIterations; i++){
+        for(Integer i=1; i<=totalIterations; i++){
             // links
             double avgLinkLosses = 1.0-(log.getAggregateByEpochNumber(epochNumber, i, Metrics.ACTIVATED_LINKS).getSum()/log.getAggregateByEpochNumber(epochNumber, i, Metrics.TOTAL_LINKS).getSum());
             double avgLinkFlow = log.getAggregateByEpochNumber(epochNumber, i, Metrics.LINK_FLOW).getAverage();
@@ -237,7 +237,7 @@ public class BenchmarkLogReplayer {
             double avgNodeUtilization = log.getAggregateByEpochNumber(epochNumber, i, Metrics.NODE_UTILIZATION).getAverage();
             double avgNodeOverload = log.getAggregateByEpochNumber(epochNumber, i, Metrics.OVERLOADED_NODES).getSum()/log.getAggregateByEpochNumber(epochNumber, i, Metrics.TOTAL_NODES).getSum();
             double relNodePowerLoss = 1.0-log.getAggregateByEpochNumber(epochNumber, i, Metrics.NODE_FINAL_LOADING).getSum()/log.getAggregateByEpochNumber(epochNumber, i, Metrics.NODE_INIT_LOADING).getSum();
-            double relNodePowerLossSinceEpoch1 = 1.0-log.getAggregateByEpochNumber(epochNumber, i, Metrics.NODE_FINAL_LOADING).getSum()/log.getAggregateByEpochNumber(1, 1, Metrics.NODE_INIT_LOADING).getSum();
+            double relNodePowerLossSinceEpoch1 = 1.0-log.getAggregateByEpochNumber(epochNumber, i, Metrics.NODE_FINAL_LOADING).getSum()/log.getAggregateByEpochNumber(1, new Integer(1), Metrics.NODE_INIT_LOADING).getSum();
             double islands = log.getAggregateByEpochNumber(epochNumber, i, Metrics.ISLANDS).getMax();
             double isolNodes = log.getAggregateByEpochNumber(epochNumber, i, Metrics.ISOLATED_NODES).getMax();
             // system
