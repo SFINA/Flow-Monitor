@@ -19,7 +19,7 @@ package experiment;
 
 import replayer.BenchmarkLogReplayer;
 import agent.BenchmarkSimulationAgent;
-import core.TimeSteppingAgent;
+import agents.time.TimeSteppingAgent;
 import org.apache.log4j.Logger;
 import power.backend.InterpssFlowDomainAgent;
 import protopeer.Experiment;

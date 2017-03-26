@@ -17,7 +17,7 @@
  */
 package agent;
 
-import core.SimulationAgent;
+import agents.simulation.SimulationAgent;
 import java.util.HashMap;
 import java.util.HashSet;
 import network.Link;

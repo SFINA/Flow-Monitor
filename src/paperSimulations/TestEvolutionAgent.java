@@ -18,7 +18,7 @@
 package paperSimulations;
 
 import replayer.BenchmarkLogReplayer;
-import core.TimeSteppingAgent;
+import agents.time.TimeSteppingAgent;
 import org.apache.log4j.Logger;
 import power.backend.InterpssFlowDomainAgent;
 import protopeer.Experiment;
