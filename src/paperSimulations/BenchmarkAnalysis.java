@@ -187,20 +187,67 @@ public class BenchmarkAnalysis extends BenchmarkSimulationAgent {
     }
 
     public double getSpectralRadius() {
-//        final int N = getFlowNetwork().getNodes().size();
-//        //EigenvalueDecomposition E
-//        //        = new EigenvalueDecomposition(calculateAdjacencyMatrix().plus(calculateAdjacencyMatrix().transpose()).times(0.5));
-//        EigenvalueDecomposition E
-//                = new EigenvalueDecomposition(calculateAdjacencyMatrix());
-//        double[] d = E.getRealEigenvalues();
-//
-//        Max maximum = new Max();
-//        double maxEigen = maximum.evaluate(d, 0, d.length);
-//        //double maxEigen = d[N - 1];
-//        return maxEigen;
-        return 0.0;
+        final int N = getFlowNetwork().getNodes().size();
+        //EigenvalueDecomposition E
+        //        = new EigenvalueDecomposition(calculateAdjacencyMatrix().plus(calculateAdjacencyMatrix().transpose()).times(0.5));
+        EigenvalueDecomposition E
+                = new EigenvalueDecomposition(calculateAdjacencyMatrix());
+        double[] d = E.getRealEigenvalues();
+
+        Max maximum = new Max();
+        double maxEigen = maximum.evaluate(d, 0, d.length);
+        //double maxEigen = d[N - 1];
+        return maxEigen;
+        //return 0.0;
     }
 
+public Matrix calculateAdjacencyMatrix(){
+        
+        
+        List<Integer> fromNode = new ArrayList<Integer>();
+        List<Integer> toNode = new ArrayList<Integer>();
+        
+        for(Link link:this.getFlowNetwork().getLinks()){
+            if (link.isActivated()==true){
+                fromNode.add(Integer.parseInt(link.getStartNode().getIndex())-1);
+                toNode.add(Integer.parseInt(link.getEndNode().getIndex())-1);
+                
+            }
+        }
+        int[] fromNodeArray=toIntegerArray(fromNode);
+        int[] toNodeArray=toIntegerArray(toNode);
+               
+    
+        //final int n = 30;
+         final int N = getFlowNetwork().getNodes().size();
+     
+        // adjacency matrix initialized
+        int[][] adjacencyMatrix = new int[N][N];
+     
+        // create symmetric adjacency matrix by exploring the topology of the outputted flowNetwork
+        int fromNodeLength = fromNodeArray.length;
+        for(int i=0; i<fromNodeLength; i++){
+            int u_axis = fromNodeArray[i];
+            int v_axis = toNodeArray[i];
+            adjacencyMatrix[u_axis][v_axis] = 1;
+            adjacencyMatrix[v_axis][u_axis] = 1; //to make it symmetric
+        }
+        
+        //converting into a type suitable for Jama
+        double[][] doubleAdjacencyMatrix = new double[adjacencyMatrix.length][adjacencyMatrix[0].length];
+
+        for(int i = 0; i < adjacencyMatrix.length; i++)
+        {
+            for(int j = 0; j < adjacencyMatrix[0].length; j++)
+                doubleAdjacencyMatrix[i][j] = (double) adjacencyMatrix[i][j];
+        }
+    
+     
+         Matrix M = new Matrix(doubleAdjacencyMatrix);
+         
+         return M;
+    }
+    
     public void getLinkStatus(int total_it) {
         //linkStatusPerContingencyBool.add(new ArrayList<Boolean>());
         linkStatusPerContingency.add(new ArrayList<Double>());
