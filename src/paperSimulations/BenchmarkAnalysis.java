@@ -28,7 +28,6 @@ import network.Link;
 import network.LinkState;
 import network.Node;
 import org.apache.log4j.Logger;
-import protopeer.util.quantities.Time;
 import Jama.EigenvalueDecomposition;
 import Jama.Matrix;
 import agent.BenchmarkSimulationAgent;
@@ -190,8 +189,6 @@ public class BenchmarkAnalysis extends BenchmarkSimulationAgent {
 
     public double getSpectralRadius() {
         final int N = getFlowNetwork().getNodes().size();
-        //EigenvalueDecomposition E
-        //        = new EigenvalueDecomposition(calculateAdjacencyMatrix().plus(calculateAdjacencyMatrix().transpose()).times(0.5));
         EigenvalueDecomposition E
                 = new EigenvalueDecomposition(calculateAdjacencyMatrix());
         double[] d = E.getRealEigenvalues();
@@ -414,6 +411,13 @@ public Matrix calculateAdjacencyMatrix(){
 
     public double getToleranceParameter() {
         return (Double) this.getFlowDomainAgent().getDomainParameters().get(PowerBackendParameter.TOLERANCE_PARAMETER);
+    }
+
+    private int[] toIntegerArray(List<Integer> fromNode) {
+        int[] NodeArray = new int[fromNode.size()];
+        for(int i=0;i<NodeArray.length;i++)
+            NodeArray[i] = fromNode.get(i);
+        return NodeArray;
     }
 
 }

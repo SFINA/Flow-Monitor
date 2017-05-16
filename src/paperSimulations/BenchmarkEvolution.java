@@ -322,7 +322,7 @@ public class BenchmarkEvolution extends BenchmarkAnalysis {
                 if (simulationTime >= 1) {
                     log.logTagSet(simulationTime, new HashSet(getFlowNetwork().getLinks()), simulationTime);
                     //before 0 to 42 or 114
-                    for (int i = 0; i < 203; i++) { //hardcoded because there is problem in time step for logreplayer
+                    for (int i = 0; i < getFlowNetwork().getLinks().size(); i++) { 
                         for (Link link : getFlowNetwork().getLinks()) {
                             HashMap<Metrics, Object> linkMetrics = getTemporalLinkMetrics().get(simulationTime).get(getIteration()).get(link.getIndex());
                             log.log(simulationTime, "utilization" + Integer.toString(i), ((Double) powerPerIteration.get(i).get(Integer.parseInt(link.getIndex()) - 1)) / link.getCapacity());

@@ -18,9 +18,11 @@
 package paperSimulations;
 
 
+import agents.time.TimeSteppingAgent;
 import paperSimulations.LogReplayerPerIteration;
 import java.io.File;
 import org.apache.log4j.Logger;
+import power.backend.InterpssFlowDomainAgent;
 import protopeer.Experiment;
 import protopeer.Peer;
 import protopeer.PeerFactory;
@@ -56,13 +58,15 @@ public class BenchmarkAnalysisExperiment extends SimulatedExperiment{
         Experiment.initEnvironment();
         final BenchmarkAnalysisExperiment test = new BenchmarkAnalysisExperiment();
         test.init();
-        final File folder = new File(peersLogDirectory+experimentID);
-        clearExperimentFile(folder);
-        folder.mkdir();
+        
         PeerFactory peerFactory=new PeerFactory() {
             public Peer createPeer(int peerIndex, Experiment experiment) {
                 Peer newPeer = new Peer(peerIndex);
                 newPeer.addPeerlet(new BenchmarkEvolution(experimentID));
+                newPeer.addPeerlet(new TimeSteppingAgent(
+                    Time.inMilliseconds(bootstrapTime),
+                    Time.inMilliseconds(runTime)));
+                newPeer.addPeerlet(new InterpssFlowDomainAgent());
                 return newPeer;
             }
         };
@@ -73,18 +77,4 @@ public class BenchmarkAnalysisExperiment extends SimulatedExperiment{
     }
     
    
-    
-    public final static void clearExperimentFile(File experiment){
-        File[] files = experiment.listFiles();
-        if(files!=null) { //some JVMs return null for empty dirs
-            for(File f: files) {
-                if(f.isDirectory()) {
-                    clearExperimentFile(f);
-                } else {
-                    f.delete();
-                }
-            }
-        }
-        experiment.delete();
-    }
 }

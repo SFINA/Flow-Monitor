@@ -7,8 +7,4 @@ _DS_Store
 **/dist/**
 **/peerlets-log/*/peer-*
 **/output/**/*.txt
-<<<<<<< HEAD
-=======
-/build/
-/dist/
->>>>>>> b50c7730c9a0bbb49f9c6569d139a5e7fc3b7207
+**/results/**/*.txt
