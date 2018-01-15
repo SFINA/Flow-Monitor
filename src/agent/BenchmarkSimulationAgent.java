@@ -221,6 +221,7 @@ public class BenchmarkSimulationAgent extends SimulationAgent{
                     
                     for(Integer iteration=1; iteration<=totalIteration; iteration++){
                         for(Link link:getFlowNetwork().getLinks()){
+                            try {
                             HashMap<Metrics,Object> linkMetrics=getTemporalLinkMetrics().get(simulationTime).get(iteration).get(link.getIndex());
                             log.log(simulationTime, iteration, Metrics.LINK_UTILIZATION, ((Double)linkMetrics.get(Metrics.LINK_UTILIZATION)));
                             log.log(simulationTime, iteration, Metrics.LINK_FLOW, ((Double)linkMetrics.get(Metrics.LINK_FLOW)));
@@ -228,8 +229,12 @@ public class BenchmarkSimulationAgent extends SimulationAgent{
                             log.log(simulationTime, iteration, Metrics.OVERLOADED_LINKS, ((Double)linkMetrics.get(Metrics.OVERLOADED_LINKS)));
                             log.log(simulationTime, iteration, Metrics.TOTAL_LINKS, ((Double)linkMetrics.get(Metrics.TOTAL_LINKS)));
                             logLinkMetrics(log, simulationTime, iteration, linkMetrics);
+                            }catch(Exception ex){
+                                logger.info(" Exception in Benchmarksimulation Agent ");
+                            }
                         }
                         for(Node node:getFlowNetwork().getNodes()){
+                            try {
                             HashMap<Metrics,Object> nodeMetrics=getTemporalNodeMetrics().get(simulationTime).get(iteration).get(node.getIndex());
                             log.log(simulationTime, iteration, Metrics.NODE_UTILIZATION, ((Double)nodeMetrics.get(Metrics.NODE_UTILIZATION)));
                             log.log(simulationTime, iteration, Metrics.NODE_FLOW, ((Double)nodeMetrics.get(Metrics.NODE_FLOW)));
@@ -237,11 +242,18 @@ public class BenchmarkSimulationAgent extends SimulationAgent{
                             log.log(simulationTime, iteration, Metrics.OVERLOADED_NODES, ((Double)nodeMetrics.get(Metrics.OVERLOADED_NODES)));
                             log.log(simulationTime, iteration, Metrics.TOTAL_NODES, ((Double)nodeMetrics.get(Metrics.TOTAL_NODES)));
                             logNodeMetrics(log, simulationTime, iteration, nodeMetrics);
+                            }catch(Exception ex){
+                                logger.info("Exception in BenchmarkSimulationAgent 2");
+                            }
                         }
-                        HashMap<Metrics,Object> sysMetrics=getTemporalSystemMetrics().get(simulationTime).get(iteration);
-                        log.log(simulationTime, iteration, Metrics.TOT_SIMU_TIME, ((Double)sysMetrics.get(Metrics.TOT_SIMU_TIME)));
-                        log.log(simulationTime, Metrics.NEEDED_ITERATIONS, (Integer)sysMetrics.get(Metrics.NEEDED_ITERATIONS));
-                        logSystemMetrics(log, simulationTime, iteration, sysMetrics);
+                        try {
+                            HashMap<Metrics,Object> sysMetrics=getTemporalSystemMetrics().get(simulationTime).get(iteration);
+                            log.log(simulationTime, iteration, Metrics.TOT_SIMU_TIME, ((Double)sysMetrics.get(Metrics.TOT_SIMU_TIME)));
+                            log.log(simulationTime, Metrics.NEEDED_ITERATIONS, (Integer)sysMetrics.get(Metrics.NEEDED_ITERATIONS));
+                            logSystemMetrics(log, simulationTime, iteration, sysMetrics);
+                        }catch(Exception ex){
+                            logger.info("Exception in BenchmarkSimulationAgent 3");
+                        }
                     }
                 }
                 getMeasurementDumper().measurementEpochEnded(log, simulationTime);
